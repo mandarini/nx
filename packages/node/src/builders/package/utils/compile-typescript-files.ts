@@ -55,7 +55,8 @@ export default function compileTypeScriptFiles(
   options: NormalizedBuilderOptions,
   context: BuilderContext,
   libRoot: string,
-  projectDependencies: DependentBuildableProjectNode[]
+  projectDependencies: DependentBuildableProjectNode[],
+  rootDir?: string
 ) {
   removeSync(options.normalizedOutputPath);
   let tsConfigPath = join(context.workspaceRoot, options.tsConfig);
@@ -73,7 +74,9 @@ export default function compileTypeScriptFiles(
   if (options.srcRootForCompilationRoot) {
     tsconfig.options.rootDir = options.srcRootForCompilationRoot;
   } else {
-    tsconfig.options.rootDir = libRoot;
+    tsconfig.options.rootDir = tsconfig.options.rootDir
+      ? tsconfig.options.rootDir
+      : libRoot;
   }
 
   if (options.watch) {
