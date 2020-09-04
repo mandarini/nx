@@ -56,7 +56,6 @@ export default function compileTypeScriptFiles(
   context: BuilderContext,
   libRoot: string,
   projectDependencies: DependentBuildableProjectNode[],
-  rootDir?: string
 ) {
   removeSync(options.normalizedOutputPath);
   let tsConfigPath = join(context.workspaceRoot, options.tsConfig);
