@@ -16,6 +16,7 @@ import {
   updateWorkspaceInTree,
   serializeJson,
   Linter,
+  copyFile,
 } from '@nrwl/workspace';
 import { join, normalize } from '@angular-devkit/core';
 
@@ -75,17 +76,19 @@ export default function (rawSchema: StorybookConfigureSchema): Rule {
       schema.js,
       workspaceStorybookVersion
     ),
+    schema.addManagerJs ? addManagerJs(schema.name,
+      schema.uiFramework) : () => { },
     configureTsLibConfig(schema),
     configureTsSolutionConfig(schema),
     updateLintTask(schema),
     addStorybookTask(schema.name, schema.uiFramework),
     schema.configureCypress
       ? schematic<CypressConfigureSchema>('cypress-project', {
-          name: schema.name,
-          js: schema.js,
-          linter: schema.linter,
-        })
-      : () => {},
+        name: schema.name,
+        js: schema.js,
+        linter: schema.linter,
+      })
+      : () => { },
   ]);
 }
 
@@ -187,7 +190,7 @@ function createLibStorybookDir(
      * Here, same as above
      * Check storybook version
      * and use the correct folder
-     * lib-files-5 or lib-files-6
+     * lib-files-5 or lib-files
      */
 
     context.logger.debug(
@@ -212,6 +215,19 @@ function createLibStorybookDir(
         ]
       ),
     ])(tree, context);
+  };
+}
+
+function addManagerJs(
+  projectName: string,
+  uiFramework: StorybookConfigureSchema['uiFramework'],
+): Rule {
+
+
+  return (tree: Tree) => {
+
+
+    return tree;
   };
 }
 

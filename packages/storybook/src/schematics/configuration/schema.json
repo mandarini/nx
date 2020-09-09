@@ -32,7 +32,12 @@
       "type": "boolean",
       "description": "Generate JavaScript files rather than TypeScript files",
       "default": false
+    },
+    "addManagerJs": {
+      "type": "boolean",
+      "description": "Generate a global manager.js file, and one in each storybook instance.",
+      "default": false
     }
-  },
+  }, 
   "required": ["name"]
 }

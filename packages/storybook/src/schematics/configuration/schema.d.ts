@@ -6,4 +6,5 @@ export interface StorybookConfigureSchema {
   configureCypress: boolean;
   linter?: Linter;
   js?: boolean;
+  addManagerJs?: boolean;
 }
