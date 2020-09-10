@@ -15,6 +15,12 @@
       "description": "Add storybook configuration to a ui library",
       "hidden": false
     },
+    "upgrade-5-to-6": {
+      "factory": "./src/schematics/upgrade/upgrade",
+      "schema": "./src/schematics/upgrade/schema.json",
+      "description": "Upgrade storybook from version 5 to version 6.",
+      "hidden": false
+    },
     "cypress-project": {
       "factory": "./src/schematics/cypress-project/cypress-project",
       "schema": "./src/schematics/cypress-project/schema.json",

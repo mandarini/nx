@@ -1,0 +1,1 @@
+describe('schematic:configuration', () => {});
