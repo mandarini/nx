@@ -329,3 +329,8 @@ export { cacheDir } from 'nx/src/utils/cache-directory';
  * @category Utils
  */
 export { matchPathWithTemplateString } from './src/utils/match-path-with-template-string';
+
+/**
+ * @category Utils
+ */
+export { resolveTemplatePath } from './src/utils/resolve-template-path';

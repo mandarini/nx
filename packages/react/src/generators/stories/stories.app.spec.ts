@@ -260,7 +260,7 @@ describe('react:stories for applications', () => {
       ).rejects.toEqual(
         new Error(
           [
-            `"apps/test-ui-app/src/app/anothercmp/**/*.skip.*" in the provided path list is an invalid path.`,
+            `"apps/test-ui-app/src/app/anothercmp/**/*.skip.*" is an invalid path.`,
             'All paths have to start with either {workspaceRoot} or {projectRoot}.',
             'For instance: "{projectRoot}/**/not-stories/**" or "{workspaceRoot}/**/**/not-stories/**".',
           ].join('\n')

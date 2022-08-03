@@ -206,7 +206,7 @@ describe('react:stories for libraries', () => {
       ).rejects.toEqual(
         new Error(
           [
-            `"libs/test-ui-lib/src/lib/anothercmp/**/*.skip.*" in the provided path list is an invalid path.`,
+            `"libs/test-ui-lib/src/lib/anothercmp/**/*.skip.*" is an invalid path.`,
             'All paths have to start with either {workspaceRoot} or {projectRoot}.',
             'For instance: "{projectRoot}/**/not-stories/**" or "{workspaceRoot}/**/**/not-stories/**".',
           ].join('\n')

@@ -165,6 +165,7 @@ It only uses language primitives and immutable objects
 - [readWorkspaceConfiguration](../../devkit/index#readworkspaceconfiguration)
 - [removeDependenciesFromPackageJson](../../devkit/index#removedependenciesfrompackagejson)
 - [removeProjectConfiguration](../../devkit/index#removeprojectconfiguration)
+- [resolveTemplatePath](../../devkit/index#resolvetemplatepath)
 - [reverse](../../devkit/index#reverse)
 - [runExecutor](../../devkit/index#runexecutor)
 - [serializeJson](../../devkit/index#serializejson)
@@ -1639,6 +1640,25 @@ The utility will update either file.
 #### Returns
 
 `void`
+
+---
+
+### resolveTemplatePath
+
+▸ **resolveTemplatePath**(`path`, `projectRoot?`): `string`
+
+#### Parameters
+
+| Name           | Type     | Description                                                               |
+| :------------- | :------- | :------------------------------------------------------------------------ |
+| `path`         | `string` | path in the format of {projectRoot}/src/dir/** or {workspaceRoot}/apps/** |
+| `projectRoot?` | `string` | the root of the current project                                           |
+
+#### Returns
+
+`string`
+
+normalized path - replaces {projectRoot} with the actual path
 
 ---
 

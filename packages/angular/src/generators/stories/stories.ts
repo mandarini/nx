@@ -1,9 +1,10 @@
 import {
-  matchPathWithTemplateString,
+  resolveTemplatePath,
   readProjectConfiguration,
   Tree,
 } from '@nrwl/devkit';
 import { formatFiles, joinPathFragments, logger } from '@nrwl/devkit';
+import ignore from 'ignore';
 import componentCypressSpecGenerator from '../component-cypress-spec/component-cypress-spec';
 import componentStoryGenerator from '../component-story/component-story';
 import type { ComponentInfo } from './lib/component-info';
@@ -40,24 +41,27 @@ export function angularStoriesGenerator(
   }
 
   const pathsToIgnore = options.ignorePaths?.split(',');
+  const ignoredPaths =
+    pathsToIgnore?.length &&
+    ignore().add(pathsToIgnore.map((path) => resolveTemplatePath(path, root)));
 
   componentsInfo
-    .filter(
-      (f) =>
+    .filter((info) => {
+      return (
+        !!info &&
         !(
           pathsToIgnore?.length &&
-          matchPathWithTemplateString(
-            joinPathFragments(f.moduleFolderPath, f.path, f.componentFileName),
-            pathsToIgnore,
-            root
+          ignoredPaths.ignores(
+            joinPathFragments(
+              info.moduleFolderPath,
+              info.path,
+              info.componentFileName
+            )
           )
         )
-    )
+      );
+    })
     ?.forEach((info) => {
-      if (info === undefined) {
-        return;
-      }
-
       componentStoryGenerator(tree, {
         projectPath: info.moduleFolderPath,
         componentName: info.name,

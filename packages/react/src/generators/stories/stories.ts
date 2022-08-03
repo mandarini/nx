@@ -10,8 +10,8 @@ import {
   getProjects,
   joinPathFragments,
   logger,
-  matchPathWithTemplateString,
   ProjectConfiguration,
+  resolveTemplatePath,
   Tree,
   visitNotIgnoredFiles,
 } from '@nrwl/devkit';
@@ -20,6 +20,7 @@ import {
   findStorybookAndBuildTargetsAndCompiler,
   isTheFileAStory,
 } from '@nrwl/storybook/src/utils/utilities';
+import ignore from 'ignore';
 
 export interface StorybookStoriesSchema {
   project: string;
@@ -84,15 +85,15 @@ export async function createAllStories(
   const { sourceRoot, root } = projectConfiguration;
   let componentPaths: string[] = [];
 
+  const ignoredPaths =
+    ignorePaths?.length &&
+    ignore().add(ignorePaths.map((path) => resolveTemplatePath(path, root)));
+
   visitNotIgnoredFiles(tree, projectRootPath(projectConfiguration), (path) => {
     // Ignore private files starting with "_".
     if (basename(path).startsWith('_')) return;
 
-    if (
-      ignorePaths?.length &&
-      matchPathWithTemplateString(path, ignorePaths, root)
-    )
-      return;
+    if (ignorePaths?.length && ignoredPaths.ignores(path)) return;
 
     if (
       (path.endsWith('.tsx') && !path.endsWith('.spec.tsx')) ||
