@@ -1,4 +1,8 @@
-import type { Tree } from '@nrwl/devkit';
+import {
+  matchPathWithTemplateString,
+  readProjectConfiguration,
+  Tree,
+} from '@nrwl/devkit';
 import { formatFiles, joinPathFragments, logger } from '@nrwl/devkit';
 import componentCypressSpecGenerator from '../component-cypress-spec/component-cypress-spec';
 import componentStoryGenerator from '../component-story/component-story';
@@ -19,7 +23,7 @@ export function angularStoriesGenerator(
   const e2eProjectName = options.cypressProject ?? `${options.name}-e2e`;
   const e2eProject = getE2EProject(tree, e2eProjectName);
   const entryPoints = getProjectEntryPoints(tree, options.name);
-
+  const { root } = readProjectConfiguration(tree, options.name);
   const componentsInfo: ComponentInfo[] = [];
   for (const entryPoint of entryPoints) {
     const moduleFilePaths = getModuleFilePaths(tree, entryPoint);
@@ -35,32 +39,46 @@ export function angularStoriesGenerator(
     );
   }
 
-  componentsInfo.forEach((info) => {
-    if (info === undefined) {
-      return;
-    }
+  const pathsToIgnore = options.ignorePaths?.split(',');
 
-    componentStoryGenerator(tree, {
-      projectPath: info.moduleFolderPath,
-      componentName: info.name,
-      componentPath: info.path,
-      componentFileName: info.componentFileName,
-      skipFormat: false,
-    });
+  componentsInfo
+    .filter(
+      (f) =>
+        !(
+          pathsToIgnore?.length &&
+          matchPathWithTemplateString(
+            joinPathFragments(f.moduleFolderPath, f.path, f.componentFileName),
+            pathsToIgnore,
+            root
+          )
+        )
+    )
+    ?.forEach((info) => {
+      if (info === undefined) {
+        return;
+      }
 
-    if (options.generateCypressSpecs && e2eProject) {
-      componentCypressSpecGenerator(tree, {
-        projectName: options.name,
+      componentStoryGenerator(tree, {
         projectPath: info.moduleFolderPath,
-        cypressProject: options.cypressProject,
         componentName: info.name,
         componentPath: info.path,
         componentFileName: info.componentFileName,
-        specDirectory: joinPathFragments(info.entryPointName, info.path),
         skipFormat: false,
       });
-    }
-  });
+
+      if (options.generateCypressSpecs && e2eProject) {
+        componentCypressSpecGenerator(tree, {
+          projectName: options.name,
+          projectPath: info.moduleFolderPath,
+          cypressProject: options.cypressProject,
+          componentName: info.name,
+          componentPath: info.path,
+          componentFileName: info.componentFileName,
+          specDirectory: joinPathFragments(info.entryPointName, info.path),
+          skipFormat: false,
+        });
+      }
+    });
 
   if (!options.skipFormat) {
     formatFiles(tree);

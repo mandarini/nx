@@ -112,6 +112,162 @@ describe('react:stories for applications', () => {
       `import { ComponentStory, ComponentMeta } from '@storybook/react'`
     );
   });
+
+  describe('ignore paths', () => {
+    beforeEach(() => {
+      appTree.write(
+        'apps/test-ui-app/src/app/test-path/ignore-it/another-one.tsx',
+        `import React from 'react';
+  
+    import './test.scss';
+  
+    export interface TestProps {
+      name: string;
+      displayAge: boolean;
+    }
+  
+    export const Test = (props: TestProps) => {
+      return (
+        <div>
+          <h1>Welcome to test component, {props.name}</h1>
+        </div>
+      );
+    };
+  
+    export default Test;
+    `
+      );
+
+      appTree.write(
+        'apps/test-ui-app/src/app/anothercmp/another-cmp-test.skip.tsx',
+        `import React from 'react';
+  
+    import './test.scss';
+  
+    export interface TestProps {
+      name: string;
+      displayAge: boolean;
+    }
+  
+    export const Test = (props: TestProps) => {
+      return (
+        <div>
+          <h1>Welcome to test component, {props.name}</h1>
+        </div>
+      );
+    };
+  
+    export default Test;
+    `
+      );
+    });
+    it('should generate stories for all if no ignorePaths', async () => {
+      await storiesGenerator(appTree, {
+        project: 'test-ui-app',
+        generateCypressSpecs: false,
+      });
+
+      expect(
+        appTree.exists('apps/test-ui-app/src/app/nx-welcome.stories.tsx')
+      ).toBeTruthy();
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp.stories.tsx'
+        )
+      ).toBeTruthy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/test-path/ignore-it/another-one.stories.tsx'
+        )
+      ).toBeTruthy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp-test.skip.stories.tsx'
+        )
+      ).toBeTruthy();
+    });
+
+    it('should ignore entire paths', async () => {
+      await storiesGenerator(appTree, {
+        project: 'test-ui-app',
+        generateCypressSpecs: false,
+        ignorePaths:
+          '{projectRoot}/src/app/anothercmp/**,{workspaceRoot}/**/**/src/**/test-path/ignore-it/**',
+      });
+
+      expect(
+        appTree.exists('apps/test-ui-app/src/app/nx-welcome.stories.tsx')
+      ).toBeTruthy();
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp.stories.tsx'
+        )
+      ).toBeFalsy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/test-path/ignore-it/another-one.stories.tsx'
+        )
+      ).toBeFalsy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp-test.skip.stories.tsx'
+        )
+      ).toBeFalsy();
+    });
+
+    it('should ignore path or a pattern', async () => {
+      await storiesGenerator(appTree, {
+        project: 'test-ui-app',
+        generateCypressSpecs: false,
+        ignorePaths:
+          '{projectRoot}/src/app/anothercmp/**/*.skip.*,{workspaceRoot}/**/**/src/**/test-path/**',
+      });
+
+      expect(
+        appTree.exists('apps/test-ui-app/src/app/nx-welcome.stories.tsx')
+      ).toBeTruthy();
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp.stories.tsx'
+        )
+      ).toBeTruthy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/test-path/ignore-it/another-one.stories.tsx'
+        )
+      ).toBeFalsy();
+
+      expect(
+        appTree.exists(
+          'apps/test-ui-app/src/app/anothercmp/another-cmp-test.skip.stories.tsx'
+        )
+      ).toBeFalsy();
+    });
+
+    it('should throw an error for invalid pattern', async () => {
+      await expect(
+        storiesGenerator(appTree, {
+          project: 'test-ui-app',
+          generateCypressSpecs: false,
+          ignorePaths:
+            'apps/test-ui-app/src/app/anothercmp/**/*.skip.*,{workspaceRoot}/**/**/src/**/test-path/**',
+        })
+      ).rejects.toEqual(
+        new Error(
+          [
+            `"apps/test-ui-app/src/app/anothercmp/**/*.skip.*" in the provided path list is an invalid path.`,
+            'All paths have to start with either {workspaceRoot} or {projectRoot}.',
+            'For instance: "{projectRoot}/**/not-stories/**" or "{workspaceRoot}/**/**/not-stories/**".',
+          ].join('\n')
+        )
+      );
+    });
+  });
 });
 
 export async function createTestUIApp(

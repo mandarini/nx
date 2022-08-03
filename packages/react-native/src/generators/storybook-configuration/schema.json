@@ -42,6 +42,17 @@
     "standaloneConfig": {
       "description": "Split the project configuration into `<projectRoot>/project.json` rather than including it inside `workspace.json`.",
       "type": "boolean"
+    },
+    "ignorePaths": {
+      "type": "string",
+      "description": "Paths to ignore when looking for components, comma-separated. Paths must start with {projectRoot} or {workspaceRoot}.",
+      "examples": [
+        "{projectRoot}/src/not-stories/**",
+        "{workspaceRoot}/**/**/src/**/not-stories/**",
+        "{projectRoot}/**/*.something.ts",
+        "{workspaceRoot}/**/**/src/**/*.other.*",
+        "{projectRoot}/src/not-stories/**,{workspaceRoot}/**/**/src/**/*.other.*,{projectRoot}/**/*.something.ts"
+      ]
     }
   },
   "required": ["name"]

@@ -148,6 +148,7 @@ It only uses language primitives and immutable objects
 - [installPackagesTask](../../devkit/index#installpackagestask)
 - [isStandaloneProject](../../devkit/index#isstandaloneproject)
 - [joinPathFragments](../../devkit/index#joinpathfragments)
+- [matchPathWithTemplateString](../../devkit/index#matchpathwithtemplatestring)
 - [moveFilesToNewDirectory](../../devkit/index#movefilestonewdirectory)
 - [names](../../devkit/index#names)
 - [normalizePath](../../devkit/index#normalizepath)
@@ -1258,6 +1259,24 @@ Normalized path fragments and joins them
 #### Returns
 
 `string`
+
+---
+
+### matchPathWithTemplateString
+
+▸ **matchPathWithTemplateString**(`path`, `pathList`, `projectRoot`): `boolean`
+
+#### Parameters
+
+| Name          | Type       |
+| :------------ | :--------- |
+| `path`        | `string`   |
+| `pathList`    | `string`[] |
+| `projectRoot` | `string`   |
+
+#### Returns
+
+`boolean`
 
 ---
 

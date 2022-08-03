@@ -15,6 +15,17 @@
         "index": 0
       },
       "x-prompt": "For which project do you want to generate stories?"
+    },
+    "ignorePaths": {
+      "type": "string",
+      "description": "Paths to ignore when looking for components, comma-separated. Paths must start with {projectRoot} or {workspaceRoot}.",
+      "examples": [
+        "{projectRoot}/src/not-stories/**",
+        "{workspaceRoot}/**/**/src/**/not-stories/**",
+        "{projectRoot}/**/*.something.ts",
+        "{workspaceRoot}/**/**/src/**/*.other.*",
+        "{projectRoot}/src/not-stories/**,{workspaceRoot}/**/**/src/**/*.other.*,{projectRoot}/**/*.something.ts"
+      ]
     }
   },
   "required": ["project"]

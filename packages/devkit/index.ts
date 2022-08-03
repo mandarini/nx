@@ -324,3 +324,8 @@ export { Hash, Hasher } from 'nx/src/hasher/hasher';
  * @category Utils
  */
 export { cacheDir } from 'nx/src/utils/cache-directory';
+
+/**
+ * @category Utils
+ */
+export { matchPathWithTemplateString } from './src/utils/match-path-with-template-string';

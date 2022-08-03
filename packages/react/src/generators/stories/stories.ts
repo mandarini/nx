@@ -10,6 +10,7 @@ import {
   getProjects,
   joinPathFragments,
   logger,
+  matchPathWithTemplateString,
   ProjectConfiguration,
   Tree,
   visitNotIgnoredFiles,
@@ -25,6 +26,7 @@ export interface StorybookStoriesSchema {
   generateCypressSpecs: boolean;
   js?: boolean;
   cypressProject?: string;
+  ignorePaths?: string;
 }
 
 export function projectRootPath(config: ProjectConfiguration): string {
@@ -74,16 +76,23 @@ export async function createAllStories(
   projectName: string,
   generateCypressSpecs: boolean,
   js: boolean,
-  cypressProject?: string
+  cypressProject?: string,
+  ignorePaths?: string[]
 ) {
   const projects = getProjects(tree);
   const projectConfiguration = projects.get(projectName);
-  const { sourceRoot } = projectConfiguration;
+  const { sourceRoot, root } = projectConfiguration;
   let componentPaths: string[] = [];
 
   visitNotIgnoredFiles(tree, projectRootPath(projectConfiguration), (path) => {
     // Ignore private files starting with "_".
     if (basename(path).startsWith('_')) return;
+
+    if (
+      ignorePaths?.length &&
+      matchPathWithTemplateString(path, ignorePaths, root)
+    )
+      return;
 
     if (
       (path.endsWith('.tsx') && !path.endsWith('.spec.tsx')) ||
@@ -147,7 +156,8 @@ export async function storiesGenerator(
     schema.project,
     schema.generateCypressSpecs,
     schema.js,
-    schema.cypressProject
+    schema.cypressProject,
+    schema.ignorePaths?.split(',')
   );
 }
 
