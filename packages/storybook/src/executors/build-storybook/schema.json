@@ -73,6 +73,12 @@
         }
       }
     },
+    "tsConfig": {
+      "type": "string",
+      "description": "The full path for the TypeScript configuration file, relative to the workspace root.",
+      "x-completion-type": "file",
+      "x-completion-glob": "tsconfig.*.json"
+    },
     "docsMode": {
       "type": "boolean",
       "description": "Build a documentation-only site using addon-docs.",

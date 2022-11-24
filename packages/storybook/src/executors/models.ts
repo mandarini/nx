@@ -16,4 +16,5 @@ export interface CommonNxStorybookConfig {
     | '@storybook/svelte'
     | '@storybook/react-native';
   config: StorybookConfig;
+  tsConfig?: string;
 }

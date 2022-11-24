@@ -42,6 +42,9 @@ export default async function* storybookExecutor(
 function runInstance(options: StorybookExecutorOptions) {
   const env = process.env.NODE_ENV ?? 'development';
   process.env.NODE_ENV = env;
+
+  process.env.TS_NODE_PROJECT =
+    options.tsConfig ?? `${options.config.configFolder}/tsconfig.json`;
   return buildDev({
     ...options,
     configType: env.toUpperCase(),
