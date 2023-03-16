@@ -59,7 +59,6 @@ describe('Storybook generators for nested workspaces', () => {
     it('should generate storybook files', () => {
       checkFilesExist(
         '.storybook/main.js',
-        '.storybook/main.root.js',
         '.storybook/preview.js',
         '.storybook/tsconfig.json'
       );
