@@ -71,12 +71,7 @@ describe('Storybook generators for non-angular projects', () => {
     }, 1000000);
   });
 
-  // TODO: Re-enable this test when Nx uses only Storybook 7 (Nx 16)
-  // This fails for Node 18 because Storybook 6.5 uses webpack even in non-webpack projects
-  // https://github.com/storybookjs/builder-vite/issues/414#issuecomment-1287536049
-  // https://github.com/storybookjs/storybook/issues/20209
-  // Error: error:0308010C:digital envelope routines::unsupported
-  xdescribe('build storybook', () => {
+  describe('build storybook', () => {
     it('should build and lint a React based storybook', () => {
       // build
       runCLI(`run ${reactStorybookLib}:build-storybook --verbose`);
@@ -87,7 +82,12 @@ describe('Storybook generators for non-angular projects', () => {
       expect(output).toContain('All files pass linting.');
     }, 1000000);
 
-    // I am not sure how much sense this test makes - Maybe it's just adding noise
+    // TODO: Re-enable this test when Nx uses only Storybook 7 (Nx 16)
+    // This fails for Node 18 because Storybook 6.5 uses webpack even in non-webpack projects
+    // https://github.com/storybookjs/builder-vite/issues/414#issuecomment-1287536049
+    // https://github.com/storybookjs/storybook/issues/20209
+    // Error: error:0308010C:digital envelope routines::unsupported
+    // Also, I am not sure how much sense this test makes - Maybe it's just adding noise
     xit('should build a React based storybook that references another lib', () => {
       const anotherReactLib = uniq('test-another-lib-react');
       runCLI(`generate @nrwl/react:lib ${anotherReactLib} --no-interactive`);

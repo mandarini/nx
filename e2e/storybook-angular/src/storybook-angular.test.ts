@@ -11,16 +11,17 @@ import {
   runCypressTests,
   tmpProjPath,
   uniq,
-  updateJson,
 } from '@nrwl/e2e/utils';
 import { writeFileSync } from 'fs';
 
 describe('Storybook for Angular', () => {
+  const previousPM = process.env.SELECTED_PM;
   const packageManager = getSelectedPackageManager() || 'yarn';
   const proj = uniq('proj');
   const appName = uniq('app');
 
   beforeAll(() => {
+    process.env.SELECTED_PM = 'yarn';
     runCreateWorkspace(proj, {
       preset: 'angular-monorepo',
       appName,
@@ -29,37 +30,20 @@ describe('Storybook for Angular', () => {
     });
 
     runCLI(
-      `generate @nrwl/angular:storybook-configuration ${appName} --generateStories --no-interactive`
+      `generate @nrwl/angular:storybook-configuration ${appName} --generateStories --storybook7Configuration --no-interactive`
     );
 
-    // TODO(jack): Overriding enhanced-resolve to 5.10.0 now until the package is fixed.
-    // See: https://github.com/webpack/enhanced-resolve/issues/362
-    updateJson('package.json', (json) => {
-      if (process.env.SELECTED_PM === 'yarn') {
-        json['resolutions'] = {
-          'enhanced-resolve': '5.10.0',
-        };
-      } else if (process.env.SELECTED_PM === 'npm') {
-        json['overrides'] = {
-          'enhanced-resolve': '5.10.0',
-        };
-      } else {
-        json['pnpm'] = {
-          overrides: {
-            'enhanced-resolve': '5.10.0',
-          },
-        };
-      }
-      return json;
-    });
     runCommand(getPackageManagerCommand().install);
   });
 
-  afterAll(() => cleanupProject());
+  afterAll(() => {
+    cleanupProject();
+    process.env.SELECTED_PM = previousPM;
+  });
 
   describe('Storybook builder', () => {
     it('shoud build storybook', () => {
-      runCLI(`run ${appName}:build-storybook`);
+      runCLI(`run ${appName}:build-storybook --verbose`);
       checkFilesExist(`dist/storybook/${appName}/index.html`);
     });
   });
