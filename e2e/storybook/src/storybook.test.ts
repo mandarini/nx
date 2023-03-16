@@ -6,7 +6,6 @@ import {
   runCommandUntil,
   tmpProjPath,
   uniq,
-  updateJson,
   getPackageManagerCommand,
   runCommand,
   getSelectedPackageManager,
@@ -37,17 +36,9 @@ describe('Storybook generators for non-angular projects', () => {
 
     runCLI(`generate @nrwl/react:lib ${reactStorybookLib} --no-interactive`);
     runCLI(
-      `generate @nrwl/react:storybook-configuration ${reactStorybookLib} --generateStories --no-interactive`
+      `generate @nrwl/react:storybook-configuration ${reactStorybookLib} --generateStories --no-interactive --storybook7Configuration`
     );
 
-    // TODO(jack): Overriding enhanced-resolve to 5.10.0 now until the package is fixed.
-    // See: https://github.com/webpack/enhanced-resolve/issues/362
-    updateJson('package.json', (json) => {
-      json['overrides'] = {
-        'enhanced-resolve': '5.10.0',
-      };
-      return json;
-    });
     runCommand(getPackageManagerCommand().install);
   });
 
@@ -82,12 +73,7 @@ describe('Storybook generators for non-angular projects', () => {
       expect(output).toContain('All files pass linting.');
     }, 1000000);
 
-    // TODO: Re-enable this test when Nx uses only Storybook 7 (Nx 16)
-    // This fails for Node 18 because Storybook 6.5 uses webpack even in non-webpack projects
-    // https://github.com/storybookjs/builder-vite/issues/414#issuecomment-1287536049
-    // https://github.com/storybookjs/storybook/issues/20209
-    // Error: error:0308010C:digital envelope routines::unsupported
-    // Also, I am not sure how much sense this test makes - Maybe it's just adding noise
+    // I am not sure how much sense this test makes - Maybe it's just adding noise
     xit('should build a React based storybook that references another lib', () => {
       const anotherReactLib = uniq('test-another-lib-react');
       runCLI(`generate @nrwl/react:lib ${anotherReactLib} --no-interactive`);
