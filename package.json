@@ -23,7 +23,8 @@
     "submit-plugin": "node ./scripts/submit-plugin.js",
     "prepare": "is-ci || husky install",
     "echo": "echo 123458",
-    "preinstall": "node ./scripts/preinstall.js"
+    "preinstall": "node ./scripts/preinstall.js",
+    "ecosystem:test:vite": "nx e2e e2e-vite"
   },
   "devDependencies": {
     "@actions/core": "^1.10.0",
