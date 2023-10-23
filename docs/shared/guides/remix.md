@@ -41,7 +41,7 @@ npm install --save-dev @nx/remix
 The command below uses the `as-provided` directory flag behavior, which is the default in Nx 16.8.0. If you're on an earlier version of Nx or using the `derived` option, omit the `--directory` flag. See the [workspace layout documentation](/reference/nx-json#workspace-layout) for more details.
 {% /callout %}
 
-```{% command="nx g @nx/remix:app myapp --directory=apps/myapp" path="~/acme" %}
+```{% command="nx g @nx/remix:app myapp --directory=apps" path="~/acme" %}
 >  NX  Generating @nx/remix:application
 
 ✔ What unit test runner should be used? · vitest
