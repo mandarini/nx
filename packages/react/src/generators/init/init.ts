@@ -75,7 +75,7 @@ export async function reactInitGenerator(host: Tree, schema: InitSchema) {
 
   setDefault(host);
 
-  if (!schema.e2eTestRunner || schema.e2eTestRunner === 'cypress') {
+  if (schema.e2eTestRunner === 'cypress') {
     ensurePackage('@nx/cypress', nxVersion);
     const { cypressInitGenerator } = (await import(
       '@nx/cypress/src/generators/init/init'

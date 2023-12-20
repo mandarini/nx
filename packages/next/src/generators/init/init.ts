@@ -2,7 +2,6 @@ import {
   addDependenciesToPackageJson,
   ensurePackage,
   GeneratorCallback,
-  readNxJson,
   runTasksInSerial,
   Tree,
 } from '@nx/devkit';
@@ -47,7 +46,7 @@ export async function nextInitGenerator(host: Tree, schema: InitSchema) {
     })
   );
 
-  if (!schema.unitTestRunner || schema.unitTestRunner === 'jest') {
+  if (schema.unitTestRunner === 'jest') {
     const { jestInitGenerator } = ensurePackage<typeof import('@nx/jest')>(
       '@nx/jest',
       nxVersion

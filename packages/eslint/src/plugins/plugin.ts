@@ -1,10 +1,11 @@
 import {
   CreateNodes,
   CreateNodesContext,
+  parseJson,
   TargetConfiguration,
 } from '@nx/devkit';
 import { dirname, join } from 'path';
-import { readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { combineGlobPatterns } from 'nx/src/utils/globs';
 import {
   ESLINT_CONFIG_FILENAMES,
@@ -31,7 +32,11 @@ export const createNodes: CreateNodes<EslintPluginOptions> = [
       return {};
     }
 
-    return {
+    if (projectRoot === '.') {
+    } else {
+    }
+
+    const result = {
       projects: {
         [projectRoot]: {
           targets: buildEslintTargets(
@@ -43,6 +48,15 @@ export const createNodes: CreateNodes<EslintPluginOptions> = [
         },
       },
     };
+    // For root projects, the name is not inferred from root package.json, so we need to manually set it.
+    // TODO(jack): We should handle this in core and remove this workaround.
+    if (projectRoot === '.') {
+      result.projects[projectRoot]['name'] = buildProjectName(
+        projectRoot,
+        context.workspaceRoot
+      );
+    }
+    return result;
   },
 ];
 
@@ -139,4 +153,14 @@ function normalizeOptions(options: EslintPluginOptions): EslintPluginOptions {
   options ??= {};
   options.targetName ??= 'lint';
   return options;
+}
+
+function buildProjectName(projectRoot: string, workspaceRoot: string): string {
+  const packageJsonPath = join(workspaceRoot, projectRoot, 'package.json');
+  let name: string;
+  if (existsSync(packageJsonPath)) {
+    const packageJson = parseJson(readFileSync(packageJsonPath, 'utf-8'));
+    name = packageJson.name;
+  }
+  return name ?? projectRoot;
 }

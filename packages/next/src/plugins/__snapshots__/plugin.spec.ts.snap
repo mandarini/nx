@@ -50,10 +50,61 @@ exports[`@nx/next/plugin integrated projects should create nodes 1`] = `
 }
 `;
 
+exports[`@nx/next/plugin integrated projects should create nodes from package scripts 1`] = `
+{
+  "projects": {
+    "my-app": {
+      "root": "my-app",
+      "targets": {
+        "build": {
+          "cache": true,
+          "command": "next build",
+          "dependsOn": [
+            "^build",
+          ],
+          "inputs": [
+            "default",
+            "^production",
+            {
+              "externalDependencies": [
+                "next",
+              ],
+            },
+          ],
+          "options": {
+            "cwd": "my-app",
+          },
+          "outputs": [
+            "{workspaceRoot}/my-app/.next",
+            "{workspaceRoot}/my-app/.next/!(cache)",
+          ],
+        },
+        "dev": {
+          "command": "next dev --turbo",
+          "options": {
+            "cwd": "my-app",
+          },
+        },
+        "start": {
+          "command": "next start",
+          "dependsOn": [
+            "build",
+          ],
+          "options": {
+            "cwd": "my-app",
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
 exports[`@nx/next/plugin root projects should create nodes 1`] = `
 {
   "projects": {
     ".": {
+      "name": "@nx/nx-source",
       "root": ".",
       "targets": {
         "build": {

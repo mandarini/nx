@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/schema",
   "cli": "nx",
   "$id": "NxESLintInit",
-  "title": "Initialize ESLint Plugin",
-  "description": "Set up the ESLint plugin.",
+  "title": "Init ESLint Plugin",
+  "description": "Init ESLint Plugin.",
   "type": "object",
   "properties": {},
   "required": []

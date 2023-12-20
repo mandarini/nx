@@ -692,7 +692,7 @@
     },
     "generators": {
       "/nx-api/eslint/generators/init": {
-        "description": "Set up the ESLint plugin.",
+        "description": "Initialize the `@nx/eslint` plugin.",
         "file": "generated/packages/eslint/generators/init.json",
         "hidden": true,
         "name": "init",

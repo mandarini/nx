@@ -31,6 +31,7 @@ describe('@nx/next/plugin', () => {
       const nodes = await createNodesFunction(
         nextConfigPath,
         {
+          usePackageScripts: false,
           buildTargetName: 'build',
           devTargetName: 'dev',
           startTargetName: 'start',
@@ -41,6 +42,7 @@ describe('@nx/next/plugin', () => {
       expect(nodes).toMatchSnapshot();
     });
   });
+
   describe('integrated projects', () => {
     const tempFs = new TempFs('test');
     beforeEach(() => {
@@ -70,9 +72,34 @@ describe('@nx/next/plugin', () => {
       const nodes = await createNodesFunction(
         'my-app/next.config.js',
         {
+          usePackageScripts: false,
           buildTargetName: 'my-build',
           devTargetName: 'my-serve',
           startTargetName: 'my-start',
+        },
+        context
+      );
+
+      expect(nodes).toMatchSnapshot();
+    });
+
+    it('should create nodes from package scripts', async () => {
+      mockNextConfig('my-app/next.config.js', {});
+      tempFs.createFileSync(
+        'my-app/package.json',
+        JSON.stringify({
+          name: 'my-app',
+          scripts: {
+            dev: 'next dev --turbo',
+            start: 'next start',
+            build: 'next build',
+          },
+        })
+      );
+      const nodes = await createNodesFunction(
+        'my-app/next.config.js',
+        {
+          usePackageScripts: true,
         },
         context
       );

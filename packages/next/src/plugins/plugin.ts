@@ -4,6 +4,7 @@ import {
   CreateNodesContext,
   detectPackageManager,
   NxJsonConfiguration,
+  parseJson,
   readJsonFile,
   TargetConfiguration,
   writeJsonFile,
@@ -11,15 +12,16 @@ import {
 import { dirname, join } from 'path';
 
 import { getNamedInputs } from '@nx/devkit/src/utils/get-named-inputs';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 
 import { projectGraphCacheDirectory } from 'nx/src/utils/cache-directory';
 import { calculateHashForCreateNodes } from '@nx/devkit/src/utils/calculate-hash-for-create-nodes';
-import { type NextConfig } from 'next';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants';
 import { getLockFileName } from '@nx/js';
 
 export interface NextPluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   buildTargetName?: string;
   devTargetName?: string;
   startTargetName?: string;
@@ -55,6 +57,7 @@ export const createDependencies: CreateDependencies = () => {
 export const createNodes: CreateNodes<NextPluginOptions> = [
   '**/next.config.{js, cjs}',
   async (configFilePath, options, context) => {
+    options.usePackageScripts ??= true;
     const projectRoot = dirname(configFilePath);
 
     // Do not create a project if package.json and project.json isn't there.
@@ -78,7 +81,7 @@ export const createNodes: CreateNodes<NextPluginOptions> = [
 
     calculatedTargets[hash] = targets;
 
-    return {
+    const result = {
       projects: {
         [projectRoot]: {
           root: projectRoot,
@@ -86,6 +89,15 @@ export const createNodes: CreateNodes<NextPluginOptions> = [
         },
       },
     };
+    // For root projects, the name is not inferred from root package.json, so we need to manually set it.
+    // TODO(jack): We should handle this in core and remove this workaround.
+    if (projectRoot === '.') {
+      result.projects[projectRoot]['name'] = buildProjectName(
+        projectRoot,
+        context.workspaceRoot
+      );
+    }
+    return result;
   },
 ];
 
@@ -95,64 +107,91 @@ async function buildNextTargets(
   options: NextPluginOptions,
   context: CreateNodesContext
 ) {
-  const nextConfig = getNextConfig(nextConfigPath, context);
+  const nextConfig = await getNextConfig(nextConfigPath, context);
+  const nextOutputPath = await getOutputs(projectRoot, nextConfig);
   const namedInputs = getNamedInputs(projectRoot, context);
 
   const targets: Record<string, TargetConfiguration> = {};
+  let targetsInferredFromPackageScripts = false;
 
-  targets[options.buildTargetName] = await getBuildTargetConfig(
-    namedInputs,
-    projectRoot,
-    nextConfig
-  );
+  if (options.usePackageScripts) {
+    const packageJson = parseJson(
+      readFileSync(
+        join(context.workspaceRoot, projectRoot, 'package.json'),
+        'utf-8'
+      )
+    );
+    const nextScriptRegexp = /(next\s+(?<cmd>\w+)|\bnext-remote-watch\b)/;
 
-  targets[options.devTargetName] = getDevTargetConfig(projectRoot);
+    // Need to wire up `dependsOn` for start to perform build first
+    let startTargetName: string;
+    let buildTargetName: string;
 
-  targets[options.startTargetName] = getStartTargetConfig(options, projectRoot);
+    if (packageJson.scripts) {
+      targetsInferredFromPackageScripts = true;
+      for (const [scriptName, script] of Object.entries(
+        packageJson.scripts as Record<string, string>
+      )) {
+        // If script is `next build` then we need to configure input and outputs
+        const match = nextScriptRegexp.exec(script);
+        if (!match) continue;
+
+        targets[scriptName] = {
+          command: script,
+          options: {
+            cwd: projectRoot,
+          },
+        };
+
+        if (match.groups?.cmd === 'build') {
+          buildTargetName = scriptName;
+          targets[scriptName].dependsOn = ['^build'];
+          targets[scriptName].cache = true;
+          targets[scriptName].inputs = getInputs(namedInputs);
+          targets[scriptName].outputs = [
+            nextOutputPath,
+            `${nextOutputPath}/!(cache)`,
+          ];
+        } else if (match.groups?.cmd === 'start') {
+          startTargetName = scriptName;
+        }
+      }
+
+      if (buildTargetName && startTargetName) {
+        targets[startTargetName].dependsOn = [buildTargetName];
+      }
+    }
+  }
+
+  if (!targetsInferredFromPackageScripts) {
+    targets[options.buildTargetName] = {
+      command: `next build`,
+      options: {
+        cwd: projectRoot,
+      },
+      dependsOn: ['^build'],
+      cache: true,
+      inputs: getInputs(namedInputs),
+      outputs: [nextOutputPath, `${nextOutputPath}/!(cache)`],
+    };
+
+    targets[options.devTargetName] = {
+      command: `next dev`,
+      options: {
+        cwd: projectRoot,
+      },
+    };
+
+    targets[options.startTargetName] = {
+      command: `next start`,
+      options: {
+        cwd: projectRoot,
+      },
+      dependsOn: [options.buildTargetName],
+    };
+  }
+
   return targets;
-}
-
-async function getBuildTargetConfig(
-  namedInputs: { [inputName: string]: any[] },
-  projectRoot: string,
-  nextConfig: NextConfig
-) {
-  const nextOutputPath = await getOutputs(projectRoot, nextConfig);
-  // Set output path here so that `withNx` can pick it up.
-  const targetConfig: TargetConfiguration = {
-    command: `next build`,
-    options: {
-      cwd: projectRoot,
-    },
-    dependsOn: ['^build'],
-    cache: true,
-    inputs: getInputs(namedInputs),
-    outputs: [nextOutputPath, `${nextOutputPath}/!(cache)`],
-  };
-  return targetConfig;
-}
-
-function getDevTargetConfig(projectRoot: string) {
-  const targetConfig: TargetConfiguration = {
-    command: `next dev`,
-    options: {
-      cwd: projectRoot,
-    },
-  };
-
-  return targetConfig;
-}
-
-function getStartTargetConfig(options: NextPluginOptions, projectRoot: string) {
-  const targetConfig: TargetConfiguration = {
-    command: `next start`,
-    options: {
-      cwd: projectRoot,
-    },
-    dependsOn: [options.buildTargetName],
-  };
-
-  return targetConfig;
 }
 
 async function getOutputs(projectRoot, nextConfig) {
@@ -170,21 +209,18 @@ async function getOutputs(projectRoot, nextConfig) {
     // If nextConfig is an object, directly use its 'distDir' property.
     dir = nextConfig.distDir;
   }
-
-  if (projectRoot === '.') {
-    return `{projectRoot}/${dir}`;
-  } else {
-    return `{workspaceRoot}/${projectRoot}/${dir}`;
-  }
+  return projectRoot === '.'
+    ? `{projectRoot}/${dir}`
+    : `{workspaceRoot}/${projectRoot}/${dir}`;
 }
 
-function getNextConfig(
+async function getNextConfig(
   configFilePath: string,
   context: CreateNodesContext
 ): Promise<any> {
   const resolvedPath = join(context.workspaceRoot, configFilePath);
 
-  const module = load(resolvedPath);
+  const module = await load(resolvedPath);
   return module.default ?? module;
 }
 
@@ -212,14 +248,29 @@ function getInputs(
 /**
  * Load the module after ensuring that the require cache is cleared.
  */
-function load(path: string): any {
-  // Clear cache if the path is in the cache
-  if (require.cache[path]) {
-    for (const k of Object.keys(require.cache)) {
-      delete require.cache[k];
+async function load(path: string): Promise<any> {
+  if (path.endsWith('.js') || path.endsWith('.cjs')) {
+    // Clear cache if the path is in the cache
+    if (require.cache[path]) {
+      for (const k of Object.keys(require.cache)) {
+        delete require.cache[k];
+      }
     }
-  }
 
-  // Then require
-  return require(path);
+    // Then require
+    return require(path);
+  } else {
+    // TODO(nicholas): handle cache clear for ESM
+    return await Function(`return import("${path}")`)();
+  }
+}
+
+function buildProjectName(projectRoot: string, workspaceRoot: string): string {
+  const packageJsonPath = join(workspaceRoot, projectRoot, 'package.json');
+  let name: string;
+  if (existsSync(packageJsonPath)) {
+    const packageJson = parseJson(readFileSync(packageJsonPath, 'utf-8'));
+    name = packageJson.name;
+  }
+  return name ?? projectRoot;
 }

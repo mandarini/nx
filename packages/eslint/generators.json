@@ -5,7 +5,7 @@
     "init": {
       "factory": "./src/generators/init/init#lintInitGenerator",
       "schema": "./src/generators/init/schema.json",
-      "description": "Set up the ESLint plugin.",
+      "description": "Initialize the `@nx/eslint` plugin.",
       "hidden": true
     },
     "workspace-rules-project": {

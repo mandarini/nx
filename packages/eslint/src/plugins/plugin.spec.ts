@@ -105,6 +105,7 @@ describe('@nx/eslint/plugin', () => {
       {
         "projects": {
           ".": {
+            "name": ".",
             "targets": {
               "lint": {
                 "cache": true,
