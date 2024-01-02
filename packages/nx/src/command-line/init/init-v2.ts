@@ -44,7 +44,7 @@ export async function initHandler(options: InitArgs) {
 
     updateGitIgnore(repoRoot);
 
-    const plugins = await detectPlugins(options);
+    const plugins = await detectPlugins();
 
     const useNxCloud =
       options.nxCloud ??
@@ -95,7 +95,7 @@ export async function initHandler(options: InitArgs) {
   }
 }
 
-async function detectPlugins(options: InitArgs): Promise<undefined | string[]> {
+async function detectPlugins(): Promise<undefined | string[]> {
   const files = ['package.json'].concat(
     sync('{apps,packages,libs}/**/*/package.json')
   );
@@ -163,22 +163,14 @@ async function detectPlugins(options: InitArgs): Promise<undefined | string[]> {
     ],
   });
 
-  const installPlugins = await prompt<{ installPlugins: 'yes' | 'no' }>([
+  const pluginsToInstall = await prompt<{ plugins: string[] }>([
     {
-      name: 'installPlugins',
-      type: 'autocomplete',
-      message: `Would you like to add these plugins?`,
-      choices: [
-        {
-          name: 'Yes, configure my workspace',
-          value: 'yes',
-        },
-        {
-          name: `No, I'll configure my workspace manually`,
-          value: 'no',
-        },
-      ],
+      name: 'plugins',
+      type: 'multiselect',
+      message: `Which plugins would you like to add?`,
+      choices: plugins.map((p) => ({ name: p, value: p })),
     },
-  ]).then((r) => r.installPlugins === 'yes');
-  return installPlugins ? plugins : undefined;
+  ]).then((r) => r.plugins);
+
+  return pluginsToInstall?.length > 0 ? pluginsToInstall : undefined;
 }
