@@ -114,7 +114,12 @@ async function buildNextTargets(
   const targets: Record<string, TargetConfiguration> = {};
   let targetsInferredFromPackageScripts = false;
 
-  if (options.usePackageScripts) {
+  const projectPackageJsonPath = join(
+    context.workspaceRoot,
+    projectRoot,
+    'package.json'
+  );
+  if (options.usePackageScripts && existsSync(projectPackageJsonPath)) {
     const packageJson = parseJson(
       readFileSync(
         join(context.workspaceRoot, projectRoot, 'package.json'),
