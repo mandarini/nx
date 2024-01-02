@@ -19,13 +19,13 @@ import { prompt } from 'enquirer';
 import { execSync } from 'child_process';
 
 export interface InitArgs {
-  addE2e: boolean;
-  force: boolean;
-  integrated: boolean;
+  // addE2e: boolean;
+  // force: boolean;
+  // integrated: boolean;
   interactive: boolean;
-  vite: boolean;
+  // vite: boolean;
   nxCloud?: boolean;
-  cacheable?: string[];
+  // cacheable?: string[];
   useDotNxInstallation?: boolean;
 }
 
