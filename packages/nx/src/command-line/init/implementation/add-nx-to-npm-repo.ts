@@ -33,7 +33,7 @@ export async function addNxToNpmRepo(options: Options) {
   if (options.interactive && scripts.length > 0) {
     output.log({
       title:
-        '🧑‍🔧 Please answer the following questions about the scripts found in your package.json in order tozRenerate task runner configuration',
+        '🧑‍🔧 Please answer the following questions about the scripts found in your package.json in order to generate task runner configuration',
     });
 
     cacheableOperations = (
