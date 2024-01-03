@@ -17,6 +17,8 @@ import { projectGraphCacheDirectory } from 'nx/src/utils/cache-directory';
 import { getLockFileName } from '@nx/js';
 
 export interface VitePluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   buildTargetName?: string;
   testTargetName?: string;
   serveTargetName?: string;
@@ -53,6 +55,7 @@ export const createDependencies: CreateDependencies = () => {
 export const createNodes: CreateNodes<VitePluginOptions> = [
   '**/{vite,vitest}.config.{js,ts}',
   async (configFilePath, options, context) => {
+    options.usePackageScripts ??= true;
     const projectRoot = dirname(configFilePath);
     // Do not create a project if package.json and project.json isn't there.
     const siblingFiles = readdirSync(join(context.workspaceRoot, projectRoot));

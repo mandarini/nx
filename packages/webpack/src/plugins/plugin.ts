@@ -20,6 +20,8 @@ import { projectGraphCacheDirectory } from 'nx/src/utils/cache-directory';
 import { calculateHashForCreateNodes } from '@nx/devkit/src/utils/calculate-hash-for-create-nodes';
 
 export interface WebpackPluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   buildTargetName?: string;
   serveTargetName?: string;
   serveStaticTargetName?: string;
@@ -60,6 +62,7 @@ export const createNodes: CreateNodes<WebpackPluginOptions> = [
     options.serveTargetName ??= 'serve';
     options.serveStaticTargetName ??= 'serve-static';
     options.previewTargetName ??= 'preview';
+    options.usePackageScripts ??= true;
 
     const projectRoot = dirname(configFilePath);
 

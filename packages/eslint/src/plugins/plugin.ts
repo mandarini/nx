@@ -14,6 +14,8 @@ import {
 } from '../utils/config-file';
 
 export interface EslintPluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   targetName?: string;
 }
 
@@ -21,8 +23,8 @@ export const createNodes: CreateNodes<EslintPluginOptions> = [
   combineGlobPatterns(['**/project.json', '**/package.json']),
   (configFilePath, options, context) => {
     const projectRoot = dirname(configFilePath);
-
     options = normalizeOptions(options);
+    options.usePackageScripts ??= true;
 
     const eslintConfigs = getEslintConfigsForProject(
       projectRoot,
@@ -30,10 +32,6 @@ export const createNodes: CreateNodes<EslintPluginOptions> = [
     );
     if (!eslintConfigs.length) {
       return {};
-    }
-
-    if (projectRoot === '.') {
-    } else {
     }
 
     const result = {

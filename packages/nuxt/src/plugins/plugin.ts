@@ -44,6 +44,8 @@ export const createDependencies: CreateDependencies = () => {
 };
 
 export interface NuxtPluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   buildTargetName?: string;
   serveTargetName?: string;
 }
@@ -51,6 +53,7 @@ export interface NuxtPluginOptions {
 export const createNodes: CreateNodes<NuxtPluginOptions> = [
   '**/nuxt.config.{js,ts}',
   async (configFilePath, options, context) => {
+    options.usePackageScripts ??= true;
     const projectRoot = dirname(configFilePath);
     // Do not create a project if package.json and project.json isn't there.
     const siblingFiles = readdirSync(join(context.workspaceRoot, projectRoot));

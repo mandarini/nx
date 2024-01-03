@@ -22,6 +22,8 @@ import { projectGraphCacheDirectory } from 'nx/src/utils/cache-directory';
 import { NX_PLUGIN_OPTIONS } from '../utils/symbols';
 
 export interface CypressPluginOptions {
+  // TODO(jack): the design of this option will need to be revisited, but we do want to respect the user's package scripts.
+  usePackageScripts?: boolean;
   ciTargetName?: string;
   targetName?: string;
   componentTestingTargetName?: string;
@@ -60,6 +62,7 @@ export const createNodes: CreateNodes<CypressPluginOptions> = [
   '**/cypress.config.{js,ts,mjs,mts,cjs,cts}',
   (configFilePath, options, context) => {
     options = normalizeOptions(options);
+    options.usePackageScripts ??= true;
     const projectRoot = dirname(configFilePath);
 
     // Do not create a project if package.json and project.json isn't there.

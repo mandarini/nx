@@ -55,7 +55,7 @@ export const createDependencies: CreateDependencies = () => {
 
 // TODO(nicholas): Add support for .mjs files
 export const createNodes: CreateNodes<NextPluginOptions> = [
-  '**/next.config.{js, cjs}',
+  '**/next.config.{js,ts,mjs,mts,cjs,cts}',
   async (configFilePath, options, context) => {
     options.usePackageScripts ??= true;
     const projectRoot = dirname(configFilePath);
