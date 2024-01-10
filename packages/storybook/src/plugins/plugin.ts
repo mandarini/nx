@@ -10,12 +10,13 @@ import {
   workspaceRoot,
   writeJsonFile,
 } from '@nx/devkit';
-import { dirname, isAbsolute, join, relative } from 'path';
+import { dirname, isAbsolute, extname, join, relative } from 'path';
 import { getNamedInputs } from '@nx/devkit/src/utils/get-named-inputs';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { calculateHashForCreateNodes } from '@nx/devkit/src/utils/calculate-hash-for-create-nodes';
 import { projectGraphCacheDirectory } from 'nx/src/utils/cache-directory';
-import { getLockFileName } from '@nx/js';
+import { getLockFileName, getRootTsConfigPath } from '@nx/js';
+import { registerTsProject } from '@nx/js/src/internal';
 import { tsquery } from '@phenomnomnominal/tsquery';
 
 export interface StorybookPluginOptions {
@@ -122,6 +123,13 @@ function buildStorybookTargets(
   const namedInputs = getNamedInputs(projectRoot, context);
 
   const storybookFramework = getStorybookConfig(configFilePath, context);
+
+  const storybookConfigRequire = getStorybookConfigRequire(
+    configFilePath,
+    context
+  );
+
+  console.log('storybookConfigRequire', storybookConfigRequire);
 
   const frameworkIsAngular = storybookFramework === "'@storybook/angular'";
 
@@ -372,4 +380,53 @@ function buildProjectName(projectRoot: string, workspaceRoot: string): string {
     name = packageJson.name;
   }
   return name ?? projectRoot;
+}
+
+function getStorybookConfigRequire(
+  configFilePath: string,
+  context: CreateNodesContext
+): any {
+  const resolvedPath = join(context.workspaceRoot, configFilePath);
+
+  let module: any;
+  if (['.ts', '.mts', '.cts'].includes(extname(configFilePath))) {
+    const tsConfigPath = getRootTsConfigPath();
+
+    if (tsConfigPath) {
+      const unregisterTsProject = registerTsProject(tsConfigPath);
+      try {
+        module = load(resolvedPath);
+      } finally {
+        unregisterTsProject();
+      }
+    } else {
+      module = load(resolvedPath);
+    }
+  } else {
+    module = load(resolvedPath);
+  }
+  return module.default ?? module;
+}
+
+/**
+ * Load the module after ensuring that the require cache is cleared.
+ */
+const packageInstallationDirectories = ['node_modules', '.yarn'];
+
+function load(path: string): any {
+  // Clear cache if the path is in the cache
+  if (require.cache[path]) {
+    for (const k of Object.keys(require.cache)) {
+      // We don't want to clear the require cache of installed packages.
+      // Clearing them can cause some issues when running Nx without the daemon
+      // and may cause issues for other packages that use the module state
+      // in some to store cached information.
+      if (!packageInstallationDirectories.some((dir) => k.includes(dir))) {
+        delete require.cache[k];
+      }
+    }
+  }
+
+  // Then require
+  return require(path);
 }
