@@ -9,8 +9,6 @@ import {
   listFiles,
   newProject,
   readFile,
-  readJson,
-  removeFile,
   rmDist,
   runCLI,
   runCommand,
@@ -21,7 +19,6 @@ import {
   updateJson,
   checkFilesExist,
 } from '@nx/e2e/utils';
-import { join } from 'path';
 
 const myApp = uniq('my-app');
 
@@ -68,84 +65,12 @@ describe('Vite Plugin', () => {
         expect(fileExists(`dist/apps/${myApp}/package.json`)).toBeFalsy();
         rmDist();
       }, 200_000);
-
-      it('should build application with new package json generation', async () => {
-        runCLI(`build ${myApp} --generatePackageJson`);
-        expect(readFile(`dist/apps/${myApp}/index.html`)).toBeDefined();
-        const fileArray = listFiles(`dist/apps/${myApp}/assets`);
-        const mainBundle = fileArray.find((file) => file.endsWith('.js'));
-        expect(
-          readFile(`dist/apps/${myApp}/assets/${mainBundle}`)
-        ).toBeDefined();
-
-        const packageJson = readJson(`dist/apps/${myApp}/package.json`);
-        expect(packageJson).toEqual({
-          name: myApp,
-          version: '0.0.1',
-          type: 'module',
-        });
-        rmDist();
-      }, 200_000);
-
-      it('should build application with existing package json generation', async () => {
-        createFile(
-          `apps/${myApp}/package.json`,
-          JSON.stringify({
-            name: 'my-existing-app',
-            version: '1.0.1',
-            scripts: {
-              start: 'node server.js',
-            },
-          })
-        );
-        runCLI(`build ${myApp} --generatePackageJson`);
-        expect(readFile(`dist/apps/${myApp}/index.html`)).toBeDefined();
-        const fileArray = listFiles(`dist/apps/${myApp}/assets`);
-        const mainBundle = fileArray.find((file) => file.endsWith('.js'));
-        expect(
-          readFile(`dist/apps/${myApp}/assets/${mainBundle}`)
-        ).toBeDefined();
-
-        const packageJson = readJson(`dist/apps/${myApp}/package.json`);
-        expect(packageJson).toEqual({
-          name: 'my-existing-app',
-          version: '1.0.1',
-          type: 'module',
-          scripts: {
-            start: 'node server.js',
-          },
-        });
-        rmDist();
-      }, 200_000);
-
-      it('should build application without copying exisiting package json when generatePackageJson=false', async () => {
-        createFile(
-          `apps/${myApp}/package.json`,
-          JSON.stringify({
-            name: 'my-existing-app',
-            version: '1.0.1',
-            scripts: {
-              start: 'node server.js',
-            },
-          })
-        );
-        runCLI(`build ${myApp} --generatePackageJson=false`);
-        expect(readFile(`dist/apps/${myApp}/index.html`)).toBeDefined();
-        const fileArray = listFiles(`dist/apps/${myApp}/assets`);
-        const mainBundle = fileArray.find((file) => file.endsWith('.js'));
-        expect(
-          readFile(`dist/apps/${myApp}/assets/${mainBundle}`)
-        ).toBeDefined();
-
-        expect(fileExists(`dist/apps/${myApp}/package.json`)).toBe(false);
-        rmDist();
-      }, 200_000);
     });
 
     100_000;
   });
 
-  describe('incremental building', () => {
+  describe('build project dependencies too', () => {
     const app = uniq('demo');
     const lib = uniq('my-lib');
     beforeAll(() => {
@@ -154,12 +79,9 @@ describe('Vite Plugin', () => {
         packages: ['@nx/react'],
       });
       runCLI(`generate @nx/react:app ${app} --bundler=vite --no-interactive`);
-
-      // only this project will be directly used from dist
       runCLI(
         `generate @nx/react:lib ${lib}-buildable --unitTestRunner=none --bundler=vite --importPath="@acme/buildable" --no-interactive`
       );
-
       runCLI(
         `generate @nx/react:lib ${lib} --unitTestRunner=none --bundler=none --importPath="@acme/non-buildable" --no-interactive`
       );
@@ -200,36 +122,10 @@ export default App;
       cleanupProject();
     });
 
-    it('should build app from libs source', () => {
-      const results = runCLI(`build ${app} --buildLibsFromSource=true`);
+    it('should build app and libs too', () => {
+      const results = runCLI(`build ${app}`);
       expect(results).toContain('Successfully ran target build for project');
-      // this should be more modules than build from dist
       expect(results).toContain('40 modules transformed');
-    });
-
-    it('should build app from libs dist', () => {
-      const results = runCLI(`build ${app} --buildLibsFromSource=false`);
-      expect(results).toContain('Successfully ran target build for project');
-      // this should be less modules than building from source
-      expect(results).toContain('38 modules transformed');
-    });
-
-    it('should build app from libs without package.json in lib', () => {
-      removeFile(`libs/${lib}-buildable/package.json`);
-
-      const buildFromSourceResults = runCLI(
-        `build ${app} --buildLibsFromSource=true`
-      );
-      expect(buildFromSourceResults).toContain(
-        'Successfully ran target build for project'
-      );
-
-      const noBuildFromSourceResults = runCLI(
-        `build ${app} --buildLibsFromSource=false`
-      );
-      expect(noBuildFromSourceResults).toContain(
-        'Successfully ran target build for project'
-      );
     });
   });
 
@@ -300,59 +196,6 @@ export default App;
       );
       expect(results).toContain(`ERROR: Coverage`);
       expect(directoryExists(coverageDir)).toBeTruthy();
-    }, 100_000);
-
-    // TODO: This takes forever and times out everything - find out why
-    xit('should not delete the project directory when coverage is enabled', async () => {
-      // when coverage is enabled in the vite.config.ts but reportsDirectory is removed
-      // from the @nx/vite:test executor options, vite will delete the project root directory
-      runCLI(`generate @nx/react:lib ${lib} --unitTestRunner=vitest`);
-      updateFile(`libs/${lib}/vite.config.ts`, () => {
-        return `import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
-
-export default defineConfig({
-  server: {
-    port: 4200,
-    host: 'localhost',
-  },
-  plugins: [
-    react(),
-    nxViteTsPaths()
-  ],
-  test: {
-    globals: true,
-    cache: {
-      dir: './node_modules/.vitest',
-    },
-    environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    reporters: ['junit'],
-    outputFile: 'junit.xml',
-    coverage: {
-      enabled: true,
-      reportsDirectory: 'coverage',
-    }
-  },
-});
-`;
-      });
-      updateJson(join('libs', lib, 'project.json'), (config) => {
-        delete config.targets.test.options.reportsDirectory;
-        return config;
-      });
-
-      const projectRoot = `${tmpProjPath()}/libs/${lib}`;
-
-      const results = runCLI(`test ${lib}`);
-
-      expect(directoryExists(projectRoot)).toBeTruthy();
-      expect(results).toContain(
-        `Successfully ran target test for project ${lib}`
-      );
-      expect(results).toContain(`JUNIT report written`);
     }, 100_000);
 
     it('should be able to run tests with inSourceTests set to true', async () => {

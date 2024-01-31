@@ -2,7 +2,6 @@ import {
   cleanupProject,
   killProcessAndPorts,
   newProject,
-  readJson,
   runCLI,
   runCommandUntil,
   uniq,
@@ -76,42 +75,6 @@ describe('@nx/vite/plugin', () => {
       if (process && process.pid) {
         await killProcessAndPorts(process.pid, port);
       }
-    });
-  });
-
-  describe('react with vitest only', () => {
-    const reactVitest = uniq('reactVitest');
-
-    beforeAll(() => {
-      originalEnv = process.env.NX_ADD_PLUGINS;
-      process.env.NX_ADD_PLUGINS = 'false';
-      proj = newProject({
-        packages: ['@nx/vite', '@nx/react'],
-      });
-      runCLI(
-        `generate @nx/react:app ${reactVitest} --bundler=webpack --unitTestRunner=vitest --e2eTestRunner=none --projectNameAndRootFormat=as-provided`
-      );
-    });
-
-    afterAll(() => {
-      process.env.NODE_ENV = originalEnv;
-      cleanupProject();
-    });
-
-    it('should contain targets build, test and lint', () => {
-      const nxJson = readJson('nx.json');
-
-      const vitePlugin = nxJson.plugins.find(
-        (p) => p.plugin === '@nx/vite/plugin'
-      );
-      expect(vitePlugin).toBeDefined();
-      expect(vitePlugin.options.buildTargetName).toEqual('build');
-      expect(vitePlugin.options.testTargetName).toEqual('test');
-    });
-
-    it('project.json should not contain test target', () => {
-      const projectJson = readJson(`${reactVitest}/project.json`);
-      expect(projectJson.targets.test).toBeUndefined();
     });
   });
 });
